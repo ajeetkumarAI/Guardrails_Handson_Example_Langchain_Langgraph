@@ -8,39 +8,49 @@ controlled LLM and agent applications using **LangChain** and
 
 ## Introduction
 
-**What are guardrails?** A guardrail is a deliberate check your
-application runs around a model call - before it, after it, or both - to
-keep behavior inside limits you define, rather than limits the model
-infers on its own.
+### What are guardrails?
 
-**Why LLM applications need them.** A model will confidently produce
-malformed output, wander off-topic, leak formatting it shouldn't, or - if
-it can call tools - attempt an action nobody approved. None of that
-requires malicious intent from the user; it can just as easily come from
-an ambiguous prompt or an edge case the model hasn't seen.
+Guardrails are checks placed before and after a model call. They keep an
+application within the limits you define instead of relying on the model to
+infer and follow those limits on its own.
 
-**Why prompt instructions alone are insufficient.** A system prompt is a
-strong suggestion the model tries to follow, not a wall it cannot cross.
-It has no independent enforcement mechanism - it relies entirely on the
-model continuing to comply, which is precisely what long conversations,
-unusual phrasing, and injected instructions can erode.
+### Why use them?
 
-**Validation vs. enforcement.** Validation produces a verdict
-(allowed/blocked, with a reason). Enforcement is the code that acts on
-that verdict - rejecting, redacting, retrying, or escalating. A validator
-nobody listens to changes nothing.
+LLMs can produce malformed output, drift off-topic, expose information, or
+propose unapproved tool actions. These failures can come from ordinary,
+ambiguous requests as well as malicious input.
 
-**Deterministic vs. LLM-based checks.** Deterministic checks (length,
-regex, allowlists) are instant and free but narrow. LLM-based checks are
-flexible but cost a model call and are probabilistic. This repository
-runs the cheap check first and escalates to the expensive one only when
-needed (`docs/07_best_practices.md`).
+### Prompts are not enforcement
 
-**Why agents introduce additional concerns.** A chatbot can, at worst,
-say something wrong. An agent that can call tools can *do* something
-wrong. Once model output can trigger a real action, guardrails must cover
-not just what the model says, but what it's authorized to do, with what
-arguments, and under whose approval (`docs/05_agent_security.md`).
+A system prompt guides a model, but it is not an independent security
+control. Long conversations, unusual phrasing, and injected instructions can
+weaken prompt-only protections.
+
+### Validation and enforcement
+
+- **Validation** decides whether content or an action is allowed and records
+  the reason.
+- **Enforcement** acts on that decision by rejecting, redacting, retrying, or
+  escalating.
+
+Both are required. A validation result that is not enforced provides no
+protection.
+
+### Choosing the right checks
+
+| Check type | Best for | Trade-off |
+|---|---|---|
+| Deterministic | Length limits, patterns, and allowlists | Fast and predictable, but narrow |
+| LLM-based | Contextual or semantic decisions | Flexible, but slower and probabilistic |
+
+This project runs inexpensive deterministic checks first, then uses more
+expensive checks only when necessary. See `docs/07_best_practices.md`.
+
+### Why agents need additional controls
+
+An agent can take actions through tools, not only generate text. Guardrails
+must therefore validate tool authorization, arguments, approval requirements,
+and tool output. See `docs/05_agent_security.md`.
 
 ---
 
@@ -218,23 +228,89 @@ flowchart LR
 
 ```
 langchain-langgraph-guardrails/
-├── README.md
-├── QUICKSTART.md
-├── requirements.txt
 ├── .env.example
-├── docs/                     7 concept guides (fundamentals -> production architecture)
-├── src/guardrails_demo/
-│   ├── config.py             environment-driven settings
-│   ├── models.py             Gemini model, with an offline stub fallback
-│   ├── schemas.py            shared Pydantic schemas
-│   ├── langchain_guardrails/ input/output/PII/topic/safety/structured/tool guards
-│   ├── langgraph_guardrails/ state, nodes, routing, workflows, mock tools
-│   └── common/               GuardrailResult, logging, small utils
+├── .gitignore
+├── LICENSE
+├── QUICKSTART.md
+├── README.md
+├── requirements.txt
+├── docs/
+│   ├── 01_guardrails_fundamentals.md
+│   ├── 02_langchain_guardrails.md
+│   ├── 03_langgraph_guardrails.md
+│   ├── 04_langchain_vs_langgraph.md
+│   ├── 05_agent_security.md
+│   ├── 06_production_architecture.md
+│   ├── 07_best_practices.md
+│   └── assets/
+│       └── guardrails-output-showcase.svg
 ├── examples/
-│   ├── langchain/            12 runnable examples
-│   └── langgraph/            14 runnable examples
-├── notebooks/                3 walkthrough notebooks
-└── tests/                    6 test files, all offline-runnable
+│   ├── langchain/
+│   │   ├── 01_input_validation.py
+│   │   ├── 02_output_validation.py
+│   │   ├── 03_pii_detection.py
+│   │   ├── 04_pii_redaction.py
+│   │   ├── 05_topic_validation.py
+│   │   ├── 06_content_safety.py
+│   │   ├── 07_structured_output_validation.py
+│   │   ├── 08_prompt_injection_detection.py
+│   │   ├── 09_tool_input_validation.py
+│   │   ├── 10_tool_output_validation.py
+│   │   ├── 11_retry_on_invalid_output.py
+│   │   └── 12_combined_langchain_guardrails.py
+│   └── langgraph/
+│       ├── 01_input_guardrail_flow.py
+│       ├── 02_output_guardrail_flow.py
+│       ├── 03_pii_redaction_flow.py
+│       ├── 04_multi_guardrail_pipeline.py
+│       ├── 05_conditional_routing.py
+│       ├── 06_retry_and_repair.py
+│       ├── 07_human_approval.py
+│       ├── 08_prompt_injection_protection.py
+│       ├── 09_tool_execution_guardrail.py
+│       ├── 10_agent_loop_protection.py
+│       ├── 11_sensitive_action_approval.py
+│       ├── 12_escalation_workflow.py
+│       ├── 13_state_based_guardrails.py
+│       └── 14_production_style_agent.py
+├── notebooks/
+│   ├── 01_langchain_guardrails.ipynb
+│   ├── 02_langgraph_guardrails.ipynb
+│   └── 03_agent_security_guardrails.ipynb
+├── src/guardrails_demo/
+│   ├── __init__.py
+│   ├── config.py
+│   ├── models.py
+│   ├── schemas.py
+│   ├── common/
+│   │   ├── __init__.py
+│   │   ├── logging.py
+│   │   ├── result.py
+│   │   └── utils.py
+│   ├── langchain_guardrails/
+│   │   ├── __init__.py
+│   │   ├── input_validation.py
+│   │   ├── output_validation.py
+│   │   ├── pii_guard.py
+│   │   ├── safety_guard.py
+│   │   ├── structured_output_guard.py
+│   │   ├── tool_guard.py
+│   │   └── topic_guard.py
+│   └── langgraph_guardrails/
+│       ├── __init__.py
+│       ├── nodes.py
+│       ├── routing.py
+│       ├── state.py
+│       ├── tools.py
+│       └── workflows.py
+└── tests/
+    ├── conftest.py
+    ├── test_graph_guardrails.py
+    ├── test_input_guardrails.py
+    ├── test_output_guardrails.py
+    ├── test_pii_guardrails.py
+    ├── test_tool_guardrails.py
+    └── test_topic_guardrails.py
 ```
 
 ---
