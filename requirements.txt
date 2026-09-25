@@ -1,0 +1,13 @@
+# Core orchestration frameworks
+langchain>=0.3.0
+langgraph>=0.2.0
+langchain-google-genai>=2.0.0
+
+# Data validation
+pydantic>=2.7.0
+
+# Configuration
+python-dotenv>=1.0.1
+
+# Testing
+pytest>=8.0.0
