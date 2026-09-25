@@ -1,6 +1,6 @@
 # LangChain + LangGraph Guardrails
 
-A hands-on, original learning repository for building safe, reliable, and
+A hands-on, learning repository for building safe, reliable, and
 controlled LLM and agent applications using **LangChain** and
 **LangGraph** together.
 
